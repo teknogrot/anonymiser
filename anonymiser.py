@@ -2,13 +2,13 @@
 # anonymiser.py - anonymisation script for 
 
 # imports block begins #
-import os                            # operating system functionality.
+import os                             # operating system functionality.
 import sys, getopt                    # system and parameters functionality.
-import argparse                     # CLI argument parser.
+import argparse                       # CLI argument parser.
 import csv                            # csv read/write functionality required for reading Amazon IP addresses.
-import pandas                        # import pandas
-import time                          https://github.com/teknogrot/anonymiser/blob/main/anonymiser.py   # time functionality.
-import datetime                        # date functioanlity.
+import pandas                         # import pandas
+import time                           # time functionality.
+import datetime                       # date functioanlity.
 # imports block ends #
 
 # global variable definition block begins #
@@ -44,12 +44,12 @@ def main(argv):
 
     if headerCheck(args.inputFile):
         headerList = headerGrab(args.inputFile)
-        print("headerList")
-        print("Number of columns: " + len("headerList"))
+        print(headerList)
+        print("Number of columns: " + str(len(headerList)))
     
     fileTypeCheck(args.inputFile.lower().strip(), checkString)
     schemaBuild(inputFile, schemaFile, schemaList)
-    dataSubjectLisBuild(inputFile, schemaList)
+    dataSubjectListBuild(inputFile, schemaList)
     #anonymise(inputFile)
         
 # main function ends #
@@ -143,6 +143,7 @@ def headerCheck(inputFileNameIn):
                     print(sampleLine)
                 testLine = next(sourceFile)
                 columnsNumber = testLine.count(',') + 1
+                return True
                 #columnCheck(columnsNumber)
         else:
             print("Headers incorrect. Please verify input file is formatted as expected.")
@@ -157,6 +158,7 @@ def headerCheck(inputFileNameIn):
                 print(sampleLine)
             testLine = next(sourceFile)
             columnsNumber = testLine.count(',') + 1
+            return False
             #columnCheck(columnsNumber)
 # headerCheck ends #
 
@@ -164,7 +166,7 @@ def headerCheck(inputFileNameIn):
 def headerGrab(inputFileNameIn):
     with open(inputFileNameIn) as csvFile:
         sourceFile = csv.reader(csvFile, delimiter=',')
-        headerList = next(sourceFile).tolist()
+        headerList = next(sourceFile)
         return headerList
 # headerGrab ends #
 
@@ -187,8 +189,7 @@ def columnCheck(columnsNumberIn):
 
 #function to build the anonymisation schema begins#
 def schemaBuild(inputFileNameIn, schemaFileNameIn, schemaList):
-    headerCheck(inputFileNameIn)
-    if schemaFileName != None:
+    if schemaFileNameIn != None:
         with open("./schemas/%s.csv" %schemaFileName, "wb") as schemaOutputFile:
             schemaString = ",".join(schemaList)
             schemaOutputFile.write(schemaString)
