@@ -12,13 +12,13 @@ import datetime                       # date functioanlity.
 # imports block ends #
 
 # global variable definition block begins #
-linesAnonymised = 0                        # set the number of lines processed to zero.
-columnList = ()                            # an empty list to contain all the sourcefile columns.
-schemaList = []                            # an empty list to store the schema definition.
-loopControl = None                        # loop control variable for replacements.
-userResponse = None                        # user response variable for file header verification.
-hasHeaders = None                        # header presence control variable.
-headersCorrect = None                        # header correctness control variable.
+linesAnonymised = 0                   # set the number of lines processed to zero.
+columnList = ()                       # an empty list to contain all the sourcefile columns.
+schemaList = []                       # an empty list to store the schema definition.
+loopControl = None                    # loop control variable for replacements.
+userResponse = None                   # user response variable for file header verification.
+hasHeaders = None                     # header presence control variable.
+headersCorrect = None                 # header correctness control variable.
 # global variable definition block ends #
 
 # string variable definition block ends #
@@ -47,9 +47,11 @@ def main(argv):
         print(headerList)
         print("Number of columns: " + str(len(headerList)))
     
-    fileTypeCheck(args.inputFile.lower().strip(), checkString)
-    schemaBuild(inputFile, schemaFile, schemaList)
-    dataSubjectListBuild(inputFile, schemaList)
+    #fileTypeCheck(args.inputFile.lower().strip(), checkString)
+    schemaBuild(args.inputFile, schemaFile, schemaList, len(headerList))
+    subjectList = dataSubjectListBuild(args.inputFile, schemaList, len(headerList))
+    print("Subjects: " + str(subjectList))
+    
     #anonymise(inputFile)
         
 # main function ends #
@@ -144,7 +146,6 @@ def headerCheck(inputFileNameIn):
                 testLine = next(sourceFile)
                 columnsNumber = testLine.count(',') + 1
                 return True
-                #columnCheck(columnsNumber)
         else:
             print("Headers incorrect. Please verify input file is formatted as expected.")
             print("Exiting program.")
@@ -159,7 +160,6 @@ def headerCheck(inputFileNameIn):
             testLine = next(sourceFile)
             columnsNumber = testLine.count(',') + 1
             return False
-            #columnCheck(columnsNumber)
 # headerCheck ends #
 
 # function to grab headers and parse to list begins #
@@ -188,11 +188,14 @@ def columnCheck(columnsNumberIn):
 # function to evaluate columns ends #
 
 #function to build the anonymisation schema begins#
-def schemaBuild(inputFileNameIn, schemaFileNameIn, schemaList):
+def schemaBuild(inputFileNameIn, schemaFileNameIn, schemaList, headerLength):
     if schemaFileNameIn != None:
         with open("./schemas/%s.csv" %schemaFileName, "wb") as schemaOutputFile:
             schemaString = ",".join(schemaList)
             schemaOutputFile.write(schemaString)
+            print("Saved anonymisation schema to: ./schemas/%s.csv" %schemaFileName, "wb")
+    else:
+        print("Not saving anonymisation schema.")
 # schemaBuild ends #
 
 # function to strip un-used columns begins #
@@ -204,14 +207,12 @@ def columnStrip(inputFileIn, delimiterIn, columnsListIn):
 # columnStrip ends #
 
 # function to build list of data subjects begins #
-def dataSubjectListBuild(inputFileIn, schemaListIn, columnValueIn):
+def dataSubjectListBuild(inputFileIn, schemaListIn, headerLength):
     subjectList = set()
-    for line in inputFile.splitlines():
-        currentLine
-        subjectList.update({currentLine.strip().lower() for subject in subjects.split(",")})
-    #currentSubject = value at columnValueIn
-    if currentSubject not in subjectList:
-        subjectList.add(currentSubject)
+    with open(inputFileIn, 'r') as sourceFile:
+        lines = sourceFile.readlines()
+    for line in lines:
+        subjectList.update({line.strip().lower() for subject in line.split(",")})
     return subjectList
 # dataSubjectListBuild ends #
 
