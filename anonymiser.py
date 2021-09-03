@@ -6,114 +6,39 @@ import os                             # operating system functionality.
 import sys, getopt                    # system and parameters functionality.
 import argparse                       # CLI argument parser.
 import csv                            # csv read/write functionality required for reading Amazon IP addresses.
-import pandas                         # import pandas
-import time                           # time functionality.
 import datetime                       # date functioanlity.
 # imports block ends #
 
 # global variable definition block begins #
-linesAnonymised = 0                   # set the number of lines processed to zero.
-columnList = ()                       # an empty list to contain all the sourcefile columns.
-schemaList = []                       # an empty list to store the schema definition.
-loopControl = None                    # loop control variable for replacements.
+schemaList = [27, 28]                 # an empty list to store the schema definition.
 userResponse = None                   # user response variable for file header verification.
-hasHeaders = None                     # header presence control variable.
-headersCorrect = None                 # header correctness control variable.
 # global variable definition block ends #
-
-# string variable definition block ends #
-csvFileType = ".csv"
-datFileType = ".dat"
-excelFileType = ".xlsx"
-checkString = None
-# string variable definition block ends #
 
 # filename variable definition block begins #
 inputFile = None
 schemaFile = None
-
 # filename variable definition block ends #
+
 # main function begins #
- 
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", help="target file to anonymise. Requires quotation marks if contains a space.", dest="inputFile", required=True)
     parser.add_argument("-s", help="saved anonymisation schema file. Requires quotation marks if contains a space.", dest="schemaFile")
     parser.add_argument("-o", help="output file name. Defaults to \"\filename_anonymised\". Requires quotation marks if contains a space.", dest="outputFile")
     args = parser.parse_args(argv)
-
+    
     if headerCheck(args.inputFile):
         headerList = headerGrab(args.inputFile)
         print(headerList)
         print("Number of columns: " + str(len(headerList)))
-    
-    #fileTypeCheck(args.inputFile.lower().strip(), checkString)
-    schemaBuild(args.inputFile, schemaFile, schemaList, len(headerList))
-    subjectList = dataSubjectListBuild(args.inputFile, schemaList, len(headerList))
+        checkBox = True
+    else:
+        checkBox = False
+    #schemaBuild(args.inputFile, schemaFile, schemaList, len(headerList))
+    subjectList = dataSubjectListBuild(args.inputFile, schemaList, checkBox)
     print("Subjects: " + str(subjectList))
-    
-    #anonymise(inputFile)
-        
+    anonymise(args.inputFile, subjectList)    
 # main function ends #
-
-# function to check if file is CSV format  begins#
-def csvCheck(inputFileNameIn):
-    if inputFileNameIn.endswith(csvFileType):
-            return True
-    else:
-        return False
-# csvCheck ends #
-
-# function to check if file is DAT format  begins#
-def datCheck(inputFileNameIn):
-    if inputFileNameIn.endswith(datFileType):
-            return True
-    else:
-        return False
-# csvCheck ends #
-
-# function to check if file is Excel format begins#
-def excelCheck(inputFileNameIn):
-    if inputFileNameIn.endswith(excelFileType):
-        return True
-    else:
-        return False
-# excelCheck ends #
-
-# function to check if filetype is supported format begins#
-def fileTypeCheck(inputFileNameIn, checkString):
-    if datCheck(inputFileNameIn):
-        checkString = "dat"
-        return checkString
-    elif csvCheck(inputFileNameIn):
-        checkString = "csv"
-        return checkString
-    elif excelCheck(inputFileNameIn):
-        checkString = "excel"
-        return checkString
-    else:
-        checkString = "error"
-        return checkString
-# fileTypeCheck ends #
-
-# function read in file begins#
-def readFile(inputFileNameIn, checkString, fileReader):
-    if checkString =="dat":
-        with open(inputFileNameIn) as datFile:
-            fileReader = csv.reader(datFile, delimiter=',')
-            return fileReader        
-    elif checkString == "csv":
-        with open(inputFileNameIn) as csvFile:
-            fileReader = csv.reader(csvFile, delimiter=',')
-            return fileReader        
-    elif checkstring == "excel":
-        with open(inputFileNameIn) as excelFile:
-            fileReader = csv.reader(excelFile, delimiter=',')
-            return fileReader
-    else:
-        print("Filetype unsupported. Please use supported filetype.")
-        sys.exit(3)
-# fileTypeCheck ends #
 
 # function to provide passed input prompt text and return true or false begins #
 def yesNoPrompt(promptIn):
@@ -137,7 +62,7 @@ def headerCheck(inputFileNameIn):
             print(headerLine)
         # ask user to confirm if headers are as expected or not. Exit on negative. Loop recursively on other input. #
         if yesNoPrompt("Does the above contain the expected headers? (Y/N): "):
-            print("Headers correct. Continuing to column check.")
+            print("Headers correct.")
             print("Header and three sample lines from %s: " %inputFileNameIn)
             with open(inputFileNameIn, 'r') as sourceFile:
                 for i in range (4):
@@ -151,7 +76,7 @@ def headerCheck(inputFileNameIn):
             print("Exiting program.")
             sys.exit(5)
     else:
-        print("No headers present. Continuing to column check.")
+        print("No headers present.")
         print("Four sample lines from %s: " %inputFileNameIn)
         with open(inputFileNameIn, 'r') as sourceFile:
             for i in range (4):
@@ -162,30 +87,12 @@ def headerCheck(inputFileNameIn):
             return False
 # headerCheck ends #
 
-# function to grab headers and parse to list begins #
 def headerGrab(inputFileNameIn):
     with open(inputFileNameIn) as csvFile:
         sourceFile = csv.reader(csvFile, delimiter=',')
         headerList = next(sourceFile)
         return headerList
 # headerGrab ends #
-
-# function to evaluate columns begins #
-def columnCheck(columnsNumberIn):
-    while index > columnsNumberIn:
-        schemaList.add("I")
-    userResponse = 0
-    while userResponse < 1 or userResponse >= columnsNumberIn:
-        userResponse = input("Please enter the number of values to anonymise: ")
-        while i < userResponse:
-            columnValue = input("Enter the index of the next element to anonymise (" + userResponse - i + " remaining): " )
-            schemaList[i] = "A"
-    userResponse = userResponse = input("Enter the number of values to draw from: ")
-    while i < userResponse:
-        columnValue = input("Enter the ranked index of the next source element (" + userResponse - i + " remaining): " )
-        elementString = ("S%s" %columnValue)
-        schemaList[i] = elementString
-# function to evaluate columns ends #
 
 #function to build the anonymisation schema begins#
 def schemaBuild(inputFileNameIn, schemaFileNameIn, schemaList, headerLength):
@@ -198,48 +105,44 @@ def schemaBuild(inputFileNameIn, schemaFileNameIn, schemaList, headerLength):
         print("Not saving anonymisation schema.")
 # schemaBuild ends #
 
-# function to strip un-used columns begins #
-def columnStrip(inputFileIn, delimiterIn, columnsListIn):
-    for line in inputFile.splitlines():
-        currentLine
-        subjectList.update({currentLine.strip().lower() for subject in subjects.split(delimiterIn)})
-    return columnList
-# columnStrip ends #
-
 # function to build list of data subjects begins #
-def dataSubjectListBuild(inputFileIn, schemaListIn, headerLength):
+def dataSubjectListBuild(inputFileIn, schemaListIn, checkBox):
     subjectList = set()
     with open(inputFileIn, 'r') as sourceFile:
-        lines = sourceFile.readlines()
-    for line in lines:
-        subjectList.update({line.strip().lower() for subject in line.split(",")})
-    return subjectList
+        csvReader = csv.reader(sourceFile)
+        if checkBox:
+            next(csvReader)
+        for line in csvReader:
+            for value in schemaListIn:
+                subjectList.update([entry.strip() for entry in line[value].split(';') if entry.strip()])
+    anonymisedSubjects = {}
+    for position, subject in enumerate(subjectList):
+        if subject.strip():
+            anonymisedSubjects[subject] = "Subject{}".format(position)
+    return anonymisedSubjects
 # dataSubjectListBuild ends #
 
 # function to run anonymisation begins #
-#def anonymise(fileIn):
- #   startTime = datetime.datetime.now()
-  #  runTimeString = startTime.strftime("%Y%m%d%H%M%S")
-   # print("Anonymisation of " + inputFile + " started at: " + startTime.strftime("%H:%M:%S, %d/%m/%Y"))
-    #while (not EOF):
-     #   currentLine = fileIn.readLine()
-      #  currentLine.parseCSV()
-       # loopControl = None
-        #for (identifier in currentLine):
-         #  if loopControl is not None
-          #      for (replacement in tuple):
-           #         if replacement is not None:
-            #            element = replacement
-             #           loopControl = "True"
-              #          break
-               #     if loopControl != "True"
-                #    replacement = "subject" + subjectList.indexOf(replacement)
-#        linesAnonymised+=1
- #   completionTime = datetime.datetime.now()
-  #  durationTaken = completionTime - startTime
-#    print("Anonymisation of " + inputFile + " completed at: " + completionTime.strftime("%H:%M:%S, %d/%m/%Y"))
- #   print("Total time taken: " durationTaken.strftime("%H:%M:%S, %d/%m/%Y")
-  #  print("Number of lines anonymised: " + linesAnonymised)
+def anonymise(inputFileIn, subjectListIn):
+    startTime = datetime.datetime.now()
+    runTimeString = startTime.strftime("%Y%m%d%H%M%S")
+    print("Anonymisation of " + inputFileIn + " started at: " + startTime.strftime("%H:%M:%S, %d/%m/%Y"))
+    with open(inputFileIn, 'r') as sourceFile:
+        sourceFileContents = sourceFile.read()
+        for subject, anonymisedSubject in subjectListIn.items():
+                sourceFileContents = sourceFileContents.replace(subject, anonymisedSubject)
+    outputFileName = os.path.splitext(inputFileIn)[0] + "_output.csv"
+    with open(outputFileName, 'wb') as outputFile:
+        outputFile.write(sourceFileContents.encode('utf-8'))
+
+    completionTime = datetime.datetime.now()
+    durationTaken = completionTime - startTime
+    subjectCount = len(subjectListIn)
+    print("Anonymisation of " + inputFileIn + " completed at: " + completionTime.strftime("%H:%M:%S, %d/%m/%Y"))
+    print("Total number of data subjects: " + str(subjectCount))
+    
+    print("Total time taken: " + str((durationTaken.microseconds)) + " microseconds.")
+    print("Calculate subjects time here whatever")
 # anonymise ends #
 
 # run main #
